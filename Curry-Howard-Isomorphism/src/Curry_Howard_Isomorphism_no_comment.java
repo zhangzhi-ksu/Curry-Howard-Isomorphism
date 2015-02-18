@@ -28,19 +28,15 @@ public class Curry_Howard_Isomorphism {
 	public class Or<T1, T2>{
 		public Or(){}
 		
-		public T1 left() { return null; }
-		public T2 right() { return null; }
 		
 		public class Left<T1, T2> extends Or<T1, T2>{
 			private T1 v;
 			public Left(T1 v1) { v = v1; }
-			public T1 left() { return v; }
 		}
 		
 		public class Right<T1, T2> extends Or<T1, T2>{
 			private T2 v;
 			public Right(T2 v2) { v = v2; }
-			public T2 right() { return v; }
 		}
 		
 		public Or<T1, T2> or_i1(T1 v1){
