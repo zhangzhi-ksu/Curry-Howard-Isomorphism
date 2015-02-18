@@ -253,7 +253,7 @@ public class Curry_Howard_Isomorphism {
 	 * p -> (q -> r) |- (p -> q) -> (p -> r)
 
 	 * 1. p -> (q -> r)     premise
-	 * ... 2. (p -> q)      assumption    ...apply the ->i tactic
+	 * ... 2. (p -> q)      assumption
 	 * 		... 3. p         assumption
          *		... 4. q -> r    ->e 1,3
          *		... 5. q         ->e 2,3
