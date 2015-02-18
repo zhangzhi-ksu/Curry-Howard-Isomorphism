@@ -39,20 +39,20 @@ public class Curry_Howard_Isomorphism {
 			public Right(T2 v2) { v = v2; }
 		}
 		
-		public Or<T1, T2> or_i1(T1 v1){
-			return (new Left<T1, T2>(v1));
-		}
-
-		public Or<T1, T2> or_i2(T2 v2){
-			return (new Right<T1, T2>(v2));
-		}
-
 		public <T3> T3 or_e(Deduction<T1, T3> d1, Deduction<T2, T3> d2){
 			if(this instanceof Left){
 				return d1.apply(this.left());
 			}else{
 				return d2.apply(this.right());
 			}
+		}		
+		
+		public Or<T1, T2> or_i1(T1 v1){
+			return (new Left<T1, T2>(v1));
+		}
+
+		public Or<T1, T2> or_i2(T2 v2){
+			return (new Right<T1, T2>(v2));
 		}
 	}
 	
