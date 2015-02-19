@@ -1,3 +1,6 @@
+import Curry_Howard_Isomorphism.Or.Left;
+import Curry_Howard_Isomorphism.Or.Right;
+
 
 public class Curry_Howard_Isomorphism {
 	public class P{}
@@ -87,27 +90,29 @@ public class Curry_Howard_Isomorphism {
 	
 	/**
 	 * for any types T1 and T2,
-	 * Or T1 T2, written T1 + T2, is the disjoint sum of T1 and T2, which is defined in OCaml as:
+	 * Or T1 T2, written T1 + T2, is the disjoint type sum of T1 and T2, which is defined in OCaml as:
 	 *   Inductive Or (T1 T2:Type) : Type :=
 	 *     | or_i1 : T1 -> Or T1 T2  
 	 *     | or_i2 : T2 -> Or T1 T2.
+	 *   where or_i1 and or_i2 are type constructors, which are used to make both T1 and T2 as subtype of (Or T1 T2)
+	 *   and (Or T1 T2) = T1 + T2
 	 * 
 	 * Or<T1, T2> = Left<T1, T2> + Right<T1, T2>
 	 * 
 	 **/
-	public class Or<T1, T2>{
+	public static class Or<T1, T2>{
 		public Or(){}
 		
 		public T1 left() { return null; }
 		public T2 right() { return null; }
 		
-		public class Left<T1, T2> extends Or<T1, T2>{
+		public static class Left<T1, T2> extends Or<T1, T2>{
 			private T1 v;
 			public Left(T1 v1) { v = v1; }
 			public T1 left() { return v; }
 		}
 		
-		public class Right<T1, T2> extends Or<T1, T2>{
+		public static class Right<T1, T2> extends Or<T1, T2>{
 			private T2 v;
 			public Right(T2 v2) { v = v2; }
 			public T2 right() { return v; }
@@ -125,7 +130,7 @@ public class Curry_Howard_Isomorphism {
 		 *  ------- (vi1)
 		 *  T1 v T2
 		 **/
-		public Or<T1, T2> or_i1(T1 v1){
+		public static <T1, T2> Or<T1, T2> or_i1(T1 v1){
 			return (new Left<T1, T2>(v1));
 		}
 		
@@ -141,7 +146,7 @@ public class Curry_Howard_Isomorphism {
 		 *  ------- (vi2)
 		 *  T1 v T2
 		 **/
-		public Or<T1, T2> or_i2(T2 v2){
+		public static <T1, T2> Or<T1, T2> or_i2(T2 v2){
 			return (new Right<T1, T2>(v2));
 		}
 		
@@ -230,10 +235,10 @@ public class Curry_Howard_Isomorphism {
 	 * 4. q ^ p                  ^i 3,2
 	 **/
 	public And<Q, P> and_example(And<P, Q> pANDq){
-		// premise: pANDq        
-		P p = pANDq.and_e1();                // ^e1
-		Q q = pANDq.and_e2();                // ^e2
-		And<Q, P> qANDp = new And<Q, P>(q, p);	 // ^i
+		// premise: And<P, Q> pANDq             // line 1
+		P p = pANDq.and_e1();                   // line 2 ^e1 applied to P ^ Q
+		Q q = pANDq.and_e2();                   // line 3 ^e2 applied to P ^ Q
+		And<Q, P> qANDp = new And<Q, P>(q, p);	// line 4 ^i  applied to Q and P
 		return qANDp;
 	}
 	
@@ -246,10 +251,9 @@ public class Curry_Howard_Isomorphism {
 	 * 3. p v q v r              vi1 2
 	 **/
 	public Or<Or<P, Q>, R> or_example(Q q){
-		Or<P, Q> pq = new Or<P, Q>();
-		Or<P, Q> pORq = pq.or_i2(q);                   // vi2
-		Or<Or<P, Q>, R> pqr = new Or<Or<P, Q>, R>();
-		Or<Or<P, Q>, R> pORqORr = pqr.or_i1(pORq);     // vi1
+		// premise: Q q                                // line 1
+		Or<P, Q> pORq = Or.or_i2(q);                   // line 2 vi2 applied to Q
+		Or<Or<P, Q>, R> pORqORr = Or.or_i1(pORq);     // line 3 vi1 applied to P v Q
 		return pORqORr;
 	}
 	
@@ -266,9 +270,12 @@ public class Curry_Howard_Isomorphism {
 	 * 6. r                      ->e 1,5 
 	 **/
 	public R example1(Imply<And<P, Q>, R> pqIMPLYr, Imply<P, Q> pIMPLYq, P p){
-		Q q = pIMPLYq.imply_e(p);        // ->e
-		And<P, Q> pANDq = new And<P, Q>(p, q);         // ^i
-		R r = pqIMPLYr.imply_e(pANDq);  // ->e
+		// premise: Imply<And<P, Q>, R> pqIMPLYr   // line 1
+		// premise: Imply<P, Q> pIMPLYq            // line 3
+		// premise: P p                            // line 2
+		Q q = pIMPLYq.imply_e(p);                  // line 4 ->e applied to P -> Q and P
+		And<P, Q> pANDq = new And<P, Q>(p, q);     // line 5 ^i  applied to P and Q
+		R r = pqIMPLYr.imply_e(pANDq);             // line 6 ->e applied to (P ^ Q) -> R and P ^ Q
 		return r;
 	}
 	
@@ -282,9 +289,10 @@ public class Curry_Howard_Isomorphism {
 	 * 4. r                   ->e 1,3
 	 **/
 	public R example11(Imply<Or<P, Q>, R> pqIMPLYr, Q q){
-		Or<P, Q> pq = new Or<P, Q>();
-		Or<P, Q> pORq = pq.or_i2(q);      // vi2
-		R r = pqIMPLYr.imply_e(pORq);     // ->e
+		// premise: Imply<Or<P, Q>, R> pqIMPLYr  // line 1
+		// premise: Q q                          // line 2
+		Or<P, Q> pORq = Or.or_i2(q);             // line 3 vi2 applied to Q
+		R r = pqIMPLYr.imply_e(pORq);            // line 4 ->e applied to (P v Q) -> R and P v Q
 		return r;
 	}
 	
@@ -300,15 +308,19 @@ public class Curry_Howard_Isomorphism {
 	 * 6. q -> r                 ->i 3-5
 	 **/
 	public Imply<Q, R> example12(P p, Imply<And<Q, P>, R> qpIMPLYr){
+		// premise: P p                                         // line 1
+		// premise: Imply<And<Q, P>, R> qpIMPLYr                // line 2
 		Deduction<Q, R> qDEDUCEr = 
 				new Deduction<Q, R>(){
 					public R deduction_step(Q q){
-						And<Q, P> qANDp = new And<Q, P>(q, p);  // ^i
-						R r = qpIMPLYr.imply_e(qANDp);
+						// assumption: Q q                      // line 3
+						And<Q, P> qANDp = new And<Q, P>(q, p);  // line 4 ^i  applied to Q and P
+						R r = qpIMPLYr.imply_e(qANDp);          // line 5 ->e applied to (Q ^ P) -> R and Q ^ P
 						return r;
 					}
 				};
-		Imply<Q, R> qIMPLYr = new Imply<Q, R>(qDEDUCEr);        // ->i
+		Imply<Q, R> qIMPLYr = new Imply<Q, R>(qDEDUCEr);        // line 6 ->i applied to deduction (... Q assume ... R)
+		                                                         
 		return qIMPLYr;
 	}
 
@@ -330,33 +342,38 @@ public class Curry_Howard_Isomorphism {
 	 * 9. (p v q) --> r     -->i 3-8
 	 **/
 	public Imply<Or<P, Q>, R> example2(Imply<P, R> pIMPLYr, Imply<Q, R> qIMPLYr){
+		// premise: Imply<P, R> pIMPLYr                             // line 1 
+		// premise: Imply<Q, R> qIMPLYr                             // line 2
 		Deduction<Or<P, Q>, R> pqDEDUCEr = 
 				new Deduction<Or<P, Q>, R>(){
 					public R deduction_step(Or<P, Q> pORq){
-						// assume P ---> R
+						// assumption: P v Q                        // line 3
 						Deduction<P, R> pDEDUCEr = 
 								new Deduction<P, R>(){
 									public R deduction_step(P p){
-										R r = pIMPLYr.imply_e(p);   // ->e
+										// assumption: P p          // line 4
+										R r = pIMPLYr.imply_e(p);   // line 5 ->e applied to P -> R and P
 										return r;
 									}
 								};
-								
-						// assume Q ---> R		
+									
 						Deduction<Q, R> qDEDUCEr = 
 								new Deduction<Q, R>(){
 									public R deduction_step(Q q){
-										R r = qIMPLYr.imply_e(q);   // ->e
+										// assumption: Q q          // line 6
+										R r = qIMPLYr.imply_e(q);   // line 7 ->e applied to Q -> R and Q
 										return r;
 									}
 								};
 								
-						R r = pORq.or_e(pDEDUCEr, qDEDUCEr);
+						R r = pORq.or_e(pDEDUCEr, qDEDUCEr);        // line 8 ve  applied to P v Q, and
+						                                            //                       deduction (... P assume ... R), and 
+									                                //                       deduction (... Q assume ... R)
 						return r;
 					}
 				};
 		
-		Imply<Or<P, Q>, R> pqIMPLYr = new Imply<Or<P, Q>, R>(pqDEDUCEr);  // ->i
+		Imply<Or<P, Q>, R> pqIMPLYr = new Imply<Or<P, Q>, R>(pqDEDUCEr); // line 9 ->i applied to deduction (... P V Q assume ... R)
 		return pqIMPLYr;
 	}
 	
@@ -370,15 +387,17 @@ public class Curry_Howard_Isomorphism {
 	 * 4. p -> (q ^ p)    ->i 2-3
 	 **/
 	public Imply<P, And<Q, P>> example3(Q q){
+		// premise: Q q                                                    // line 1
 		Deduction<P, And<Q, P>> pDEDUCEqp = 
 				new Deduction<P, And<Q, P>>(){
 					public And<Q, P> deduction_step(P p){
-						And<Q, P> qANDp = new And<Q, P>(q, p);  // ^i
+						// assumption: P p                                 // line 2
+						And<Q, P> qANDp = new And<Q, P>(q, p);             // line 3 ^i  applied to Q and P
 						return qANDp;
 					}
 				};
 		
-		Imply<P, And<Q, P>> pIMPLYqp = new Imply<P, And<Q, P>>(pDEDUCEqp); // ->i
+		Imply<P, And<Q, P>> pIMPLYqp = new Imply<P, And<Q, P>>(pDEDUCEqp); // line 4 ->i applied to deduction (... P assume ... Q ^ P)
 		return pIMPLYqp;
 	}
 	
@@ -396,26 +415,28 @@ public class Curry_Howard_Isomorphism {
 	 * 8. (p -> q) -> (p -> r)
 	 **/
 	public Imply<Imply<P, Q>, Imply<P, R>> example4(Imply<P, Imply<Q, R>> pIMPLYqir){
+		// premise: Imply<P, Imply<Q, R>> pIMPLYqir                                  // line 1
 		Deduction<Imply<P, Q>, Imply<P, R>> piqDEDUCEpir = 
 				new Deduction<Imply<P, Q>, Imply<P, R>>(){
 					public Imply<P, R> deduction_step(Imply<P, Q> pIMPLYq){
-						// assume P --> R
-						Deduction<P, R> qDEDUCEr = 
+						// assumption: P -> Q                                        // line 2
+						Deduction<P, R> pDEDUCEr = 
 								new Deduction<P, R>(){
 									public R deduction_step(P p){
-										Imply<Q, R> qIMPLYr = pIMPLYqir.imply_e(p);  // ->e
-										Q q = pIMPLYq.imply_e(p);                    // ->e
-										R r = qIMPLYr.imply_e(q);                    // ->e
+										// assumption: P p                           // line 3
+										Imply<Q, R> qIMPLYr = pIMPLYqir.imply_e(p);  // line 4 ->e applied to P -> (Q -> R) and P
+										Q q = pIMPLYq.imply_e(p);                    // line 5 ->e applied to P -> Q P
+										R r = qIMPLYr.imply_e(q);                    // line 6 ->e applied to Q -> R and Q
 										return r;
 									}
 								};
 						// Imply introduction
-						Imply<P, R> pIMPLYr = new Imply<P, R>(qDEDUCEr);             // ->i
+						Imply<P, R> pIMPLYr = new Imply<P, R>(pDEDUCEr);             // line 7 ->i applied to deduction (... P assume ... R)
 						return pIMPLYr;
 					}
 				};
 		
-		Imply<Imply<P, Q>, Imply<P, R>> piqIMPLYpir = new Imply<Imply<P, Q>, Imply<P, R>>(piqDEDUCEpir);  // ->i
+		Imply<Imply<P, Q>, Imply<P, R>> piqIMPLYpir = new Imply<Imply<P, Q>, Imply<P, R>>(piqDEDUCEpir);  // line 8 ->i applied to deduction (... P-> Q assume .... P -> R)
 		return piqIMPLYpir;
 	}
 }
