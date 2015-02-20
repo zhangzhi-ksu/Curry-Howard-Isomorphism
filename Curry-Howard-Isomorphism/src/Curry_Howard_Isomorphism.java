@@ -1,6 +1,3 @@
-import Curry_Howard_Isomorphism.Or.Left;
-import Curry_Howard_Isomorphism.Or.Right;
-
 
 public class Curry_Howard_Isomorphism {
 	public class P{}
@@ -12,10 +9,10 @@ public class Curry_Howard_Isomorphism {
 	/**
 	 * To illustrate the relationship between proofs and programs, as described by Curry–Howard isomorphism, 
 	 * we introduce the following judgment:
-	 *  V: T         V is a proof term for proposition T, which can also be interpreted as
-	 *  V: T         V is a program of type T
+	 *  V: T         V is a proof term (evidence) for proposition T, which can also be interpreted as
+	 *  V: T         V is an object of type T
 	 *  
-	 *  These dual interpretations of the same judgment is the core of the Curry-Howard isomorphism 
+	 *  These dual interpretations of the same judgment are the core of the Curry-Howard isomorphism 
 	 *  (or the proofs-as-programs and propositions-as-types interpretation). 
 	 **/
 	
@@ -36,12 +33,15 @@ public class Curry_Howard_Isomorphism {
 		private T2 v2;
 		
 		/**
-		 * 'And' is a program of type T1 -> T2 -> AND<T1, T2>, taking a value of type T1 and T2 respectively
-		 * and producing a value of type AND<T1, T2>;
+		 * The 'And' introduction rule can be thought of as a program step or a method that
+                 * takes a value of type T1 and T2 respectively
+		 * and produces a value of type And<T1, T2>;  We can represent the introduction
+                 * rule as a constructor for a parametric class And<T1,T2>
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking a proof 
-		 * of proposition T1 and T2 respectively and producing a proof of proposition AND<T1, T2>.
-		 * This corresponds to And-introduction rule:
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then the constructor
+                 * can be interpreted as taking evidence of the truth 
+		 * of propositions T1 and T2 respectively and producing evidence of the truth of proposition
+                 *  And<T1, T2> (i.e., T1 ^ T2).
 		 * 
 		 *  T1  T2
 		 * -------- (^i)
@@ -53,11 +53,12 @@ public class Curry_Howard_Isomorphism {
 		}
 		
 		/**
-		 * 'end_e1' is a program of type AND<T1, T2> -> T1, taking a value of type AND<T1, T2> and producing a value of type T1;
+		 * 'end_e1' can be thought of as a program step or method that takes an value of type And<T1, T2> returns a value of type T1;
+                 * Note that the 'this' variable represents the implicit input (of type And<T1, T2>) to this method.
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking a proof 
-		 * of proposition AND<T1, T2> and producing a proof of proposition T1.
-		 * This corresponds to And-elimination rule:
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking evidence of the truth of 
+		 * proposition And<T1, T2> (i.e., T1 ^ T2) and producing a evidence of the truth of T1.
+		 * This corresponds to And-elimination rule ^e1:
 		 * 
 		 *  T1 ^ T2
 		 *  ------- (^e1)
@@ -69,11 +70,12 @@ public class Curry_Howard_Isomorphism {
 		
 		
 		/**
-		 * 'and_e2' is a program of type AND<T1, T2> -> T2, taking a value of type AND<T1, T2> and producing a value of type T2;
+		 * 'end_e2' can be thought of as a program step or method that takes an value of type And<T1, T2> returns a value of type T2;
+                 * Note that the 'this' variable represents the implicit input (of type And<T1, T2>) to this method.
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking a proof 
-		 * of proposition AND<T1, T2> and producing a proof of proposition T2.
-		 * This corresponds to And-elimination rule:
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking evidence of the truth of 
+		 * proposition And<T1, T2> (i.e., T1 ^ T2) and producing evidence of the truth of T2.
+		 * This corresponds to And-elimination rule ^e2:
 		 * 
 		 *  T1 ^ T2
 		 *  ------- (^e2)
@@ -89,7 +91,18 @@ public class Curry_Howard_Isomorphism {
 	/*****************************************************************/	
 	
 	/**
-	 * for any types T1 and T2,
+	 * for any types T1 and T2, we want instances of the class Or<T1,T2> to provide evidence of
+         * the proposition T1 v T2.  To achieve this, note that if T1 v T2 is true, our evidence
+         * needs to indicate *which* of T1 or T2 is true.  There are a number of ways to achieve
+         * this. E.g., One could have two fields for both T1 and T2 and in And, and introduce some sort of flag 
+         * indicating which field represented the evidence.  However, we do it in way that is a bit
+         * cleaner.  We create two subclasses of Or<T1,T2> -- one representing the case where T1 is true,
+         * the other representing the case where T2 is true.  Then, when we need to do "or elimination",
+         * we can use "instance of" to check which one is true.
+         *
+         * Below is some other technical stuff for people interested in functional programming.
+         * [You don't need to understand the rest of the comment.]
+         *
 	 * Or T1 T2, written T1 + T2, is the disjoint type sum of T1 and T2, which is defined in OCaml as:
 	 *   Inductive Or (T1 T2:Type) : Type :=
 	 *     | or_i1 : T1 -> Or T1 T2  
@@ -103,8 +116,8 @@ public class Curry_Howard_Isomorphism {
 	public static class Or<T1, T2>{
 		public Or(){}
 		
-		public T1 left() { return null; }
-		public T2 right() { return null; }
+		private T1 left() { return null; }
+		private T2 right() { return null; }
 		
 		public static class Left<T1, T2> extends Or<T1, T2>{
 			private T1 v;
@@ -119,11 +132,18 @@ public class Curry_Howard_Isomorphism {
 		}
 		
 		/**
-		 * 'or_i1' is a program of type T1 -> Or<T1, T2>, taking a value of type T1 and 
-		 * producing a value of type Or<T1, T2>;
+		 * The 'Or' introduction rule "vi1" can be thought of as a program step or a method that
+                 * takes a value of type T1 respectively
+		 * and produces a value of type Or<T1, T2>;  In the implementation of the 
+                 * method, we use the constructor for the subclass "Left" to create the value, 
+                 * which has the effect of "tagging" the object so that we know the "left side" of T1 v T2 
+                 * is true.
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking a proof 
-		 * of proposition T1 and producing a proof of proposition Or<T1, T2>.
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then the method
+                 * can be interpreted as taking evidence of the truth 
+		 * of propositions T2 and producing evidence of the truth of proposition
+                 *  Or<T1, T2> (i.e., T1 v T2).
+                 *
 		 * This corresponds to Or-elimination rule:
 		 * 
 		 *    T1
@@ -135,11 +155,18 @@ public class Curry_Howard_Isomorphism {
 		}
 		
 		/**
-		 * 'or_i2' is a program of type T2 -> Or<T1, T2>, taking a value of type T2 and 
-		 * producing a value of type Or<T1, T2>;
+		 * The 'Or' introduction rule "vi2" can be thought of as a program step or a method that
+                 * takes a value of type T1 respectively
+		 * and produces a value of type Or<T1, T2>;  In the implementation of the 
+                 * method, we use the constructor for the subclass "Right" to create the value, 
+                 * which has the effect of "tagging" the object so that we know the "right side" of T1 v T2 
+                 * is true.
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking a proof 
-		 * of proposition T2 and producing a proof of proposition Or<T1, T2>.
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then the method
+                 * can be interpreted as taking evidence of the truth 
+		 * of proposition T2 and producing evidence of the truth of proposition
+                 *  Or<T1, T2> (i.e., T1 v T2).
+                 *
 		 * This corresponds to Or-elimination rule:
 		 * 
 		 *    T2
@@ -151,6 +178,22 @@ public class Curry_Howard_Isomorphism {
 		}
 		
 		/**
+                 * The 'Or' elimination rule uses the Deduction class below, so read the documentation
+                 * for that class first.
+                 *
+                 * The 'Or' elimination rule can be though of as a program step or a method 'or_e' that
+                 * takes three inputs...
+                 *  (1) a value of Or<T1,T2> (the implicit 'this' variable) 
+                 *  (2) a Deduction object containing a method that transforms values of T1 into values of T3
+                 *  (3) a Deduction object containing a method that transforms values of T2 into values of T3
+                 * ...and produces a value of type T3.
+                 *
+                 * 'or_e' works by checking to see whether the class of 'this' is Left or Right and then
+                 * calling either the "getter" method left() or right() as appropriate.  If the class of this
+                 * is "Left" the subproof that proves T3 given T1 is activated to return an object of type T3.
+                 * If the class of this is "Right" the subproof that proves T3 given T2 
+                 * is activated to return an object of type T3.
+                 
 		 *            ...T1 assume   ...T2 assume
 		 *  T1 v T2   ...T3          ...T3
 		 * --------------------------------------- (ve)
@@ -166,26 +209,76 @@ public class Curry_Howard_Isomorphism {
 	}
 
 	/*****************************************************************/
-	/**        Implies-introduction and Implies-elimination          */
+	/**        Representing a "sub-proof" i.e., a set of proof steps 
+        /**        that is "boxed" is our proof checker
 	/*****************************************************************/		
-	
+
+        /**
+	 * Several of our proof rules use sub-proofs that look like this...
+         *
+         *      ... T1  assumption
+         *      ...
+         *      ... T2
+         *
+         * We can think of such a sub-proof as a method that, if given evidence for
+         * T1 can produce evidence for T2.
+         *
+         * We create a special class to wrap this type of method.
+         * The class is Deduction<T1,T2> and objects of the class have a method called
+         * 'deduction_step' that essentially represents
+         * a proof of the sequent T1 |- T2.
+         * 
+         * In the programming world, whenever we want to create a proof of T1 |- T2, 
+         * we create an instance of Deduction<T1,T2> and override the deduction_step 
+         * method with a method representing a proof of T1 |- T2.
+         *
+	 * We also create a method called "apply", intuitively, that "activates" the
+         * subproof to by giving it evidence for T1 which will cause it to produce
+         * evidence for T2.
+	 **/
+
 	public abstract class Deduction<T1, T2>{
+
+                /**
+		 * Override this method to represent a subproof that takes evidence of
+                 * an assumption T1 and produces evidences for T2.
+		 * 
+                 **/
 		public abstract T2 deduction_step(T1 assumptions);
 		
+                /**
+		 * Use this method to "activate" a subproof -- if evidence of
+                 * an assumption T1 is given, it will produce evidences for T2.
+		 * 
+                 **/
 		public T2 apply(T1 v1){
 			return deduction_step(v1);
 		}
 	}
 	
+
+	/*****************************************************************/
+	/**        Implies-introduction and Implies-elimination          */
+	/*****************************************************************/		
+	
 	public class Imply<T1, T2>{
 		private Deduction<T1, T2> deduction;
 		
 		/**
-		 * 'imply_i' is a program of type T1 -> T2, taking a value of type T1 and producing a value of T2; 
+                 * The 'Implies' introduction rule can be thought of as a program step or a method that
+                 * takes as input an object encapsulating a deduction (i.e., a method) that provides
+                 * way to transform a value of type T1 into a value of type T2 and produces an object of type
+                 * Implies<T1,T2>.  We can represent the introduction
+                 * rule as a constructor for a parametric class Implies<T1,T2>
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it means taking a proof of 
-		 * proposition T1 and producing a proof of proposition T2.
-		 * This corresponds to Implies-introduction:
+		 * by Curry-Howard isomorphism, then the constructor can be interpreted as taking 
+                 * a subproof that, given evidence of the truth of propositions T1 can
+                 * produce evidence of the truth of proposition T2.  In our representation, a subproof
+                 * (the stuff above the bar in the ->i rule) is represented as an object of the
+                 * Deduction class.  The Deduction class object contains a method deduction_step
+                 * that takes as input evidence for the truth of T1 and produces evidence of the truth
+                 * of T2.   Thus, evidence for the truth of the proposition T1 -> T2 is a method
+                 * (aka procedure, subroutine) for transforming T1 evidence into T2 evidence.
 		 * 
 		 *  ... T1 assume
 		 *  ... T2
@@ -195,15 +288,19 @@ public class Curry_Howard_Isomorphism {
 		public Imply(Deduction<T1, T2> d){
 			deduction = d;
 		}
-		
-		
+
 		/**
-		 * 'imply_e' is a program of type Imply<T1, T2> -> T1 -> T2, taking a value of type Imply<T1, T2> and T1 
-		 * respectively and producing a value of T2; 
+		 * 'imply_e' can be thought of as a program step or method that takes an object of type Implies<T1, T2> and an object of 
+                 * type T1 and returns an object of type T2;
+                 * Note that the 'this' variable represents the implicit input (of type Imply<T1, T2>) to this method.
 		 * 
-		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it means taking a proof of 
-		 * proposition T1 and producing a proof of proposition T2.
-		 * This corresponds to Implies-elimination:
+		 * by Curry-Howard isomorphism, if T1 and T2 are propositions, then it can be interpreted as taking evidence of the truth of 
+		 * proposition Imply<T1, T2> (i.e., T1 -> T2), evidence of the truth of T1, and producing a evidence of the truth of T2.
+                 * Intuitively, the evidence for T2 is constructed by using the evidence for T1 -> T2.  Specificly, the evidence
+                 * for T1 -> T2 is a method deduction_step (wrapped inside of a Deduction object) that transforms T1 evidence into
+                 * T2 evidence.  Because we have evidence for T1 (the argument v of the method), we can apply the T1 -> T2 evidence
+                 * (i.e., the deduction_step procedure) to the T1 evidence to get the T2 evidence.
+                 *
 		 *  
 		 *  T1 -> T2
 		 *  T1
@@ -215,7 +312,35 @@ public class Curry_Howard_Isomorphism {
 		}
 		
 	}
-	
+
+	/** =========================================
+	 *   S u m m a r y
+         *
+         *     For any propositional variable P, Q, R, whenever the propositional variable is true, we assume
+         *     that there is some way of representing evidence of the truth of the propositional variable.
+         * 
+         *     For any non-primitive proposition built with the connectives ^, v, and ^, we can 
+         *     represent evidence of the truth of that proposition using Java objects.
+         *     
+         *     Evidence for T1 ^ T2  is an object with two fields: one holding evidence of T1 and the 
+         *     other holding evidence of T2
+         *
+         *     Evidence for T1 v T2  is an object with a tag indicating that which of T1 or T2 is true.
+         *     In our case, the "tag" is represented by the run-time type of a T1 v T2 object
+         *     (which is either a Left object or a Right object).  We check the tag by performing
+         *     an "instance of" operation on the T1 v T2 (i.e., Or<T1,T2>) object.
+         *     If the tag indicates that T1 is true, then the evidence object for T1 v T2 includes
+         *     evidence of T1.  If T2 is true, then the evidence object for T1 v T2 includes evidence of T2.
+         *
+         *     Evidence for T1 v T2  is an object with a tag indicating that which of T1 or T2 is true.
+         *     In our case, the "tag" is represented by the run-time type of a T1 v T2 object
+         *     (which is either a Left object or a Right object).  We check the tag by performing
+         *     an "instance of" operation on the T1 v T2 (i.e., Or<T1,T2>) object.
+         *     If the tag indicates that T1 is true, then the evidence object for T1 v T2 includes
+         *     evidence of T1.  If T2 is true, then the evidence object for T1 v T2 includes evidence of T2.
+	 *
+	 **/
+
 	/*****************************************************************/
 	/********************** Proofs-As-Programs  **********************/
 	/*****************************************************************/	
